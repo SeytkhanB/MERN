@@ -4,6 +4,7 @@ const app = express()
 import dotenv from 'dotenv';
 dotenv.config();
 import 'express-async-errors';
+// import cors from 'cors';
 
 // db and authenticationUser
 import connectDB from './db/connect.js';
@@ -16,13 +17,20 @@ import jobsRouter from './routes/jobsRoutes.js';
 import notFoundMiddleware from './middleware/not-found.js';         // <-- don't forget to use ".js" extension
 import errorHandlerMiddleware from './middleware/error-handler.js'; // <-- don't forget to use ".js" extension
 
+// cors() <-- helps us to receive data from our origins
+// app.use(cors())
+
 // it will make the JSON data available to us in the controllers since we will have post requests.
 // we will be looking for stuff, that JSON data will be passed through us using the express
 app.use(express.json())
 
+
 app.get('/', (req, res) => {
-  // throw new Error('error')   // to check if it gives an error and that's it!
-  res.send('Welcome!')
+  res.json({msg: 'Welcome!'})
+})
+
+app.get('/api/v1', (req, res) => {
+  res.json({msg: 'API'})
 })
 
 app.use('/api/v1/auth', authRouter)

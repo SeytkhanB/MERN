@@ -2,6 +2,7 @@
 import User from '../models/User.js';
 import { StatusCodes } from 'http-status-codes';
 import {BadRequestError} from '../errors/index.js'
+import { use } from 'chai';
 
 const register = async (req, res) => {
   const {name, email, password} = req.body
@@ -15,8 +16,22 @@ const register = async (req, res) => {
     throw new BadRequestError('Email already in use')
   }
 
-  const user = await User.create(req.body)
-  res.status(StatusCodes.CREATED).json({user})
+  const user = await User.create({name, email, password})
+  // catch token and send it with user.
+  // JSON Web Token is most commonly used to identify an authenticated user!
+  const token = user.createJWT()
+  res
+    .status(StatusCodes.CREATED)
+    .json({
+      user: {
+        email: user.email,
+        name: user.name,
+        lastName: user.lastName,
+        location: user.location,
+      },
+      token,
+      location: user.location,
+  })
 }
 
 const login = async (req, res) => {
