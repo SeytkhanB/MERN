@@ -4,7 +4,7 @@ const app = express()
 import dotenv from 'dotenv';
 dotenv.config();
 import 'express-async-errors';
-// import cors from 'cors';
+import morgan from 'morgan';
 
 // db and authenticationUser
 import connectDB from './db/connect.js';
@@ -22,8 +22,13 @@ import errorHandlerMiddleware from './middleware/error-handler.js'; // <-- don't
 
 // it will make the JSON data available to us in the controllers since we will have post requests.
 // we will be looking for stuff, that JSON data will be passed through us using the express
-app.use(express.json())
 
+// to log HTTP requests and errors, and simplifies the process
+if (process.env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'))
+}
+
+app.use(express.json())
 
 app.get('/', (req, res) => {
   res.json({msg: 'Welcome!'})

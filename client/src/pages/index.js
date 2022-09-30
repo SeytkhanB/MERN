@@ -1,12 +1,12 @@
 
 import Error from "./Error";
 import Register from "./Register";
-import Dashboard from "./Dashboard";
 import Landing from "./Landing";
+import ProtectedRoute from "./ProtectedRoute";
 
 export {
   Error,
   Register,
-  Dashboard,
-  Landing
+  Landing,
+  ProtectedRoute
 }

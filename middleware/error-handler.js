@@ -17,6 +17,7 @@ const errorHandlerMiddleware = (err, req, res, next) => {
       .map(item => item.message)
       .join(', ')
   }
+  
   if (err.code && err.code === 11000) {
     defaultError.statusCodes = StatusCodes.BAD_REQUEST
     // email has to be unique ↓
