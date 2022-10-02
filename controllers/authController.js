@@ -1,7 +1,7 @@
 
 import User from '../models/User.js';
 import { StatusCodes } from 'http-status-codes';
-import {BadRequestError, UnauthenticatedError} from '../errors/index.js'
+import {BadRequestError, UnAuthenticatedError} from '../errors/index.js'
 
 const register = async (req, res) => {
   const {name, email, password} = req.body
@@ -43,12 +43,12 @@ const login = async (req, res) => {
   // in order to avoid error we should select ↓ password, because we need this password to check out
   const user = await User.findOne({email}).select('+password')
   if (!user) {
-    throw new UnauthenticatedError('Invalid Credentials')
+    throw new UnAuthenticatedError('Invalid Credentials')
   }
 
   const isPasswordCorrect = await user.comparePassword(password)
   if (!isPasswordCorrect) {
-    throw new UnauthenticatedError('Invalid Credentials')
+    throw new UnAuthenticatedError('Invalid Credentials')
   }
 
   const token = user.createJWT()
@@ -66,7 +66,25 @@ const login = async (req, res) => {
 
 
 const updateUser = async (req, res) => {
-  res.send('update user')
+  const {email, name, lastName, location} = req.body
+  if (!email || !name || !lastName || !location) {
+    throw new BadRequestError('Please provide all values')
+  }
+
+  const user = await User.findOne({_id: req.user.userId})
+
+  user.name = name
+  user.email = email
+  user.location = location
+  user.lastName = lastName
+
+  // this is ↓ instance method that is available on all the documents
+  await user.save()
+
+  const token = user.createJWT()
+  res.status(StatusCodes.OK).json({
+    user, token, location: user.location
+  })
 }
 
 export {register, login, updateUser}

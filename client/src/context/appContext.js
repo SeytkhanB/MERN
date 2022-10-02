@@ -6,7 +6,9 @@ import {
 
   SETUP_USER_BEGIN,
   SETUP_USER_SUCCESS,
-  SETUP_USER_ERROR
+  SETUP_USER_ERROR,
+  TOGGLE_SIDEBAR,
+  LOGOUT_USER
 } from './actions';
 import reducer from './reducer';
 import axios from 'axios'
@@ -17,6 +19,7 @@ const token = localStorage.getItem('token')
 const userLocation = localStorage.getItem('location')
 
 const initialState = {
+  showSidebar: false,
   showAlert: false,
   isLoading: false,
   alertText: '',
@@ -44,6 +47,16 @@ const AppProvider = ({children}) => {
     }, 3000)
   }
 
+  const toggleSidebar = () => {
+    dispatch({ type: TOGGLE_SIDEBAR })
+  }
+
+  const logoutUser = () => {
+    setTimeout(() => {
+      dispatch({type: LOGOUT_USER})
+      removeUserFromLocalStorage()
+    }, 1000)
+  }
 
   const addUserToLocalStorage = ({user, token, location}) => {
     localStorage.setItem('user', JSON.stringify(user))
@@ -89,7 +102,9 @@ const AppProvider = ({children}) => {
       value={{
         ...state,
         displayAlert,
-        setupUser
+        setupUser,
+        toggleSidebar,
+        logoutUser
       }}
     >
       {children}
