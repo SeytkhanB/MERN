@@ -1,7 +1,6 @@
 
 import { StatusCodes } from "http-status-codes"
 
-// This function should receive 4 parameters "err, req, res, next". Don't forget them!
 const errorHandlerMiddleware = (err, req, res, next) => {
   console.log(err.message)
 
@@ -12,7 +11,6 @@ const errorHandlerMiddleware = (err, req, res, next) => {
 
   if (err.name === 'ValidationError') {
     defaultError.statusCodes = StatusCodes.BAD_REQUEST
-    // defaultError.msg = err.message
     defaultError.msg = Object.values(err.errors)
       .map(item => item.message)
       .join(', ')

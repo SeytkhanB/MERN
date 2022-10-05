@@ -30,19 +30,19 @@ const UserScheme = new mongoose.Schema({
   lastName: {
     type: String,
     maxlength: 20,
-    default: 'lastName',
+    default: 'Last name',
     trim: true
   },
   location: {
     type: String,
     maxlength: 20,
-    default: 'my city',
+    default: 'My city',
     trim: true
   },
 })
 
 UserScheme.pre('save', async function() {
-  // to avoid an error while updating the user we check if we modify password
+  // to avoid an error. while updating the user we check if we modify password
   if (!this.isModified('password')) return
   const salt = await bcrypt.genSalt(10)
   this.password = await bcrypt.hash(this.password, salt)

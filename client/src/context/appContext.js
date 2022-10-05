@@ -7,11 +7,23 @@ import {
   SETUP_USER_BEGIN,
   SETUP_USER_SUCCESS,
   SETUP_USER_ERROR,
+
   TOGGLE_SIDEBAR,
-  LOGOUT_USER
+  LOGOUT_USER,
+    
+  UPDATE_USER_BEGIN,
+  UPDATE_USER_SUCCESS,
+  UPDATE_USER_ERROR,
+
+  HANDLE_CHANGE,
+  CLEAR_VALUES,
+
+  CREATE_JOB_BEGIN,
+  CREATE_JOB_SUCCESS,
+  CREATE_JOB_ERROR,
 } from './actions';
 import reducer from './reducer';
-import axios from 'axios'
+import axios from 'axios';
 
 
 const user = localStorage.getItem('user')
@@ -27,7 +39,18 @@ const initialState = {
   user: user ? JSON.parse(user) : null,
   token: token,
   userLocation: userLocation || '',
-  jobLocation: userLocation || ''
+  
+  // We use these two lines when we edit job
+  editJobId: '',
+  isEditing: false,
+  
+  company: '',
+  position: '',
+  jobLocation: userLocation || '',
+  jobTypeOptions: ['Full-time', 'Part-time', 'Remote', 'Internship'],
+  jobType: 'Full-time',
+  statusOptions: ['Pending', 'Interview', 'Declined'],
+  status: 'Pending'
 }
 
 const AppContext = createContext()
@@ -97,6 +120,112 @@ const AppProvider = ({children}) => {
   }
 
 
+  const authFetch = axios.create({
+    baseURL: '/api/v1'
+  })
+
+  // Axios interceptors are functions that Axios calls for 
+  // every request. You can use interceptors to transform the 
+  // request before Axios sends it, or transform the response before 
+  // Axios returns the response to your code. You can think of interceptors 
+  // as Axios' equivalent to middleware in Express or Mongoose.
+  // request interceptors
+  authFetch.interceptors.request.use(
+    function(config) {
+      config.headers.common['Authorization'] = `Bearer ${state.token}`
+      return config
+    },
+    function(error) {
+      return Promise.reject(error)
+    }
+  )
+
+  // response interceptor
+  authFetch.interceptors.response.use(
+    function(response) {
+      return response
+    },
+    function(error) {
+      if (error.response.status === 401) {
+        // if user is not authorized kick them out
+        logoutUser()
+      }
+      return Promise.reject(error)
+    }
+  )
+
+  
+  // I could mix this function with "SetupUser", but I want to make them different
+  const updateUser = async (currentUser) => {
+    dispatch({type: UPDATE_USER_BEGIN})
+
+    try {
+      const {data} = await authFetch.patch('/auth/updateUser', currentUser)
+
+      const {user, location} = data
+
+      dispatch({
+        type: UPDATE_USER_SUCCESS,
+        payload: {user, location, token}
+      })
+
+      addUserToLocalStorage({
+        user, location, token: initialState.token
+      })
+
+    } catch (error) {
+      const message = error.response.data.msg
+
+      if (error.response.status !== 401) {
+        dispatch({
+          type: UPDATE_USER_ERROR,
+          payload: {msg: message}
+        })
+      }
+    }
+
+    clearAlert()
+  }
+
+
+  const handleChange = ({name, value}) => {
+    dispatch({
+      type: HANDLE_CHANGE,
+      payload: {name, value}
+    })
+  }
+
+
+  const clearValues = () => {
+    dispatch({type: CLEAR_VALUES})
+  }
+
+  const createJob = async () => {
+    dispatch({type: CREATE_JOB_BEGIN})
+    try {
+      const {position, company, jobLocation, jobType, status} = state
+
+      await authFetch.post('/jobs', {
+        company, position, jobLocation, jobType, status
+      })
+
+      dispatch({type: CREATE_JOB_SUCCESS})
+      dispatch({type: CLEAR_VALUES})
+
+    } catch (error) {
+      if (error.response.status === 401) return
+    
+      const message = error.response.data.msg
+      dispatch({
+        type: CREATE_JOB_ERROR,
+        payload: {msg: message}
+      })
+    }
+
+    clearAlert()
+  }
+
+
   return (
     <AppContext.Provider
       value={{
@@ -104,7 +233,11 @@ const AppProvider = ({children}) => {
         displayAlert,
         setupUser,
         toggleSidebar,
-        logoutUser
+        logoutUser,
+        updateUser,
+        handleChange,
+        clearValues,
+        createJob
       }}
     >
       {children}
