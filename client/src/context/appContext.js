@@ -21,6 +21,17 @@ import {
   CREATE_JOB_BEGIN,
   CREATE_JOB_SUCCESS,
   CREATE_JOB_ERROR,
+
+  GET_JOBS_BEGIN,
+  GET_JOBS_SUCCESS,
+
+  SET_EDIT_JOB,
+  DELETE_JOB_BEGIN,
+
+  EDIT_JOB_BEGIN,
+  EDIT_JOB_SUCCESS,
+  EDIT_JOB_ERROR,
+
 } from './actions';
 import reducer from './reducer';
 import axios from 'axios';
@@ -50,7 +61,12 @@ const initialState = {
   jobTypeOptions: ['Full-time', 'Part-time', 'Remote', 'Internship'],
   jobType: 'Full-time',
   statusOptions: ['Pending', 'Interview', 'Declined'],
-  status: 'Pending'
+  status: 'Pending',
+
+  jobs: [],
+  totalJobs: 0,
+  numOfPages: 1,
+  page: 1
 }
 
 const AppContext = createContext()
@@ -155,6 +171,7 @@ const AppProvider = ({children}) => {
   )
 
   
+  // UPDATE USER
   // I could mix this function with "SetupUser", but I want to make them different
   const updateUser = async (currentUser) => {
     dispatch({type: UPDATE_USER_BEGIN})
@@ -175,7 +192,7 @@ const AppProvider = ({children}) => {
 
     } catch (error) {
       const message = error.response.data.msg
-
+      
       if (error.response.status !== 401) {
         dispatch({
           type: UPDATE_USER_ERROR,
@@ -200,6 +217,7 @@ const AppProvider = ({children}) => {
     dispatch({type: CLEAR_VALUES})
   }
 
+  // CREATE JOB
   const createJob = async () => {
     dispatch({type: CREATE_JOB_BEGIN})
     try {
@@ -226,6 +244,88 @@ const AppProvider = ({children}) => {
   }
 
 
+  // GET JOBS
+  const getJobs = async () => {
+    const url = '/jobs'
+
+    dispatch({type: GET_JOBS_BEGIN})
+    try {
+      const {data} = await authFetch.get(url)
+      const {jobs, totalJobs, numOfPages} = data
+      
+      dispatch({
+        type: GET_JOBS_SUCCESS,
+        payload: {
+          jobs, totalJobs, numOfPages
+        }
+      })
+
+    } catch (error) {
+      console.log(error.response);
+      logoutUser()
+    }
+
+    // alert may still display when we quickly switch 
+    // from "Add job" to "All job". in this case clear alert!
+    clearAlert()
+  }
+
+
+  // SET EDIT JOB
+  const setEditJob = (id) => {
+    dispatch({type: SET_EDIT_JOB, payload: {id}})
+  }
+
+  const editJob = async () => {
+    dispatch({type: EDIT_JOB_BEGIN})
+
+    try {
+      const {
+        position, 
+        company, 
+        jobLocation, 
+        jobType, 
+        status, 
+        editJobId
+      } = state
+
+      await authFetch.patch(`/jobs/${editJobId}`, {
+        position,
+        company,
+        jobType,
+        status,
+        jobLocation
+      })
+
+      dispatch({type: EDIT_JOB_SUCCESS})
+      dispatch({type: CLEAR_VALUES})
+
+    } catch (error) {
+      if (error.response.status === 401) return
+
+      const message = error.response.data.msg
+      dispatch({
+        type: EDIT_JOB_ERROR,
+        payload: {msg: message}
+      })
+    }
+
+    clearAlert()
+  }
+
+
+  // DELETE JOB
+  const deleteJob = async (jobId) => {
+    dispatch({type: DELETE_JOB_BEGIN})
+    try {
+      await authFetch.delete(`/jobs/${jobId}`)
+      getJobs()
+    } catch (error) {
+      logoutUser()
+    }
+  }
+
+
   return (
     <AppContext.Provider
       value={{
@@ -237,7 +337,11 @@ const AppProvider = ({children}) => {
         updateUser,
         handleChange,
         clearValues,
-        createJob
+        createJob,
+        getJobs,
+        setEditJob,
+        deleteJob,
+        editJob
       }}
     >
       {children}

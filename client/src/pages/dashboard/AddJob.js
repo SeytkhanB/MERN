@@ -19,6 +19,7 @@ export default function AddJob() {
     clearValues,
     createJob,
     isLoading,
+    editJob,    
   } = useAppContext()
 
   const handleSubmit = e => {
@@ -30,6 +31,7 @@ export default function AddJob() {
     }
 
     if (isEditing) {
+      editJob()
       return
     }
 
