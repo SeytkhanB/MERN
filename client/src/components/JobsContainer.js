@@ -4,13 +4,25 @@ import { useEffect } from "react";
 import Loading from './Loading';
 import Job from "./Job";
 import Wrapper from "../assets/wrappers/JobsContainer";
+import PageBtnContainer from "./PageBtnContainer";
 
 export default function JobsContainer() {
-  const {getJobs, jobs, isLoading, page, totalJobs} = useAppContext()
-
+  const {
+    getJobs, 
+    jobs, 
+    isLoading, 
+    page, 
+    totalJobs,
+    search,
+    searchStatus,
+    searchType,
+    sort,
+    numOfPages
+  } = useAppContext()
+  
   useEffect(() => {
     getJobs()
-  }, [])
+  }, [search, searchStatus, searchType, sort, page])
 
   if (isLoading) {
     return <Loading center />
@@ -38,6 +50,7 @@ export default function JobsContainer() {
           })
         }
       </div>
+      {numOfPages > 0 && <PageBtnContainer />}
     </Wrapper>
   )
 }

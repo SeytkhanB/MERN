@@ -30,6 +30,11 @@ import {
   EDIT_JOB_BEGIN,
   EDIT_JOB_SUCCESS,
   EDIT_JOB_ERROR,
+
+  SHOW_STATS_BEGIN,
+  SHOW_STATS_SUCCESS,
+  CLEAR_FILTERS,
+  CHANGE_PAGE
 } from "./actions"
 import { initialState } from "./appContext"
 
@@ -142,7 +147,8 @@ const reducer = (state, action) => {
   if (action.type === HANDLE_CHANGE) {
     return {
       ...state,
-      [action.payload.name]: action.payload.value
+      [action.payload.name]: action.payload.value,
+      page: 1   // set page to 1 whenever you type new value
     }
   }
 
@@ -251,6 +257,44 @@ const reducer = (state, action) => {
       alertType: 'danger',
       alertText: action.payload.msg
     }
+  }
+
+
+  // SHOW STATS
+  if (action.type === SHOW_STATS_BEGIN) {
+    return {
+      ...state,
+      isLoading: true,
+      showAlert: false  // optionally
+    }
+  }
+
+  if (action.type === SHOW_STATS_SUCCESS) {
+    const {stats, monthlyApplications} = action.payload
+    return {
+      ...state,
+      isLoading: false,
+      stats,
+      monthlyApplications
+    }
+  }
+
+
+  // CLEAR FILTERS
+  if (action.type === CLEAR_FILTERS) {
+    return {
+      ...state,
+      search: '',
+      searchStatus: 'All',
+      searchType: 'All',
+      sort: 'Latest'
+    }
+  }
+
+  
+  // PAGINATION
+  if (action.type === CHANGE_PAGE) {
+    return {...state, page: action.payload.page}
   }
 
   throw new Error(`No such action: ${action.type}`)

@@ -32,6 +32,10 @@ import {
   EDIT_JOB_SUCCESS,
   EDIT_JOB_ERROR,
 
+  SHOW_STATS_BEGIN,
+  SHOW_STATS_SUCCESS,
+  CLEAR_FILTERS,
+  CHANGE_PAGE
 } from './actions';
 import reducer from './reducer';
 import axios from 'axios';
@@ -63,10 +67,19 @@ const initialState = {
   statusOptions: ['Pending', 'Interview', 'Declined'],
   status: 'Pending',
 
+  search: '',
+  searchStatus: 'All',
+  searchType: 'All',
+  sort: 'Latest',
+  sortOptions: ['Latest', 'Oldest', 'a-z', 'z-a'],
+
   jobs: [],
   totalJobs: 0,
   numOfPages: 1,
-  page: 1
+  page: 1,
+
+  stats: {},
+  monthlyApplications: []
 }
 
 const AppContext = createContext()
@@ -246,7 +259,11 @@ const AppProvider = ({children}) => {
 
   // GET JOBS
   const getJobs = async () => {
-    const url = '/jobs'
+    const {search, searchStatus, searchType, sort, page} = state
+    let url = `/jobs?page=${page}&status=${searchStatus}&jobType=${searchType}&sort=${sort}`
+    if (search) {
+      url = url + `&search=${search}`
+    }
 
     dispatch({type: GET_JOBS_BEGIN})
     try {
@@ -269,7 +286,6 @@ const AppProvider = ({children}) => {
     // from "Add job" to "All job". in this case clear alert!
     clearAlert()
   }
-
 
   // SET EDIT JOB
   const setEditJob = (id) => {
@@ -325,6 +341,36 @@ const AppProvider = ({children}) => {
     }
   }
 
+  
+  // SHOW STATS
+  const showStats = async () => {
+    dispatch({type: SHOW_STATS_BEGIN})
+    try {
+      const {data} = await authFetch.get('/jobs/stats')
+      dispatch({
+        type: SHOW_STATS_SUCCESS,
+        payload: {
+          stats: data.defaultStats,
+          monthlyApplications: data.monthlyApplications
+        }
+      })
+
+    } catch (error) {
+      logoutUser()
+    }
+
+    clearAlert()
+  }
+
+  // CLEAR FILTERS
+  const clearFilters = () => {
+    dispatch({type: CLEAR_FILTERS})
+  }
+
+  // PAGINATION
+  const changePage = (page) => {
+    dispatch({type: CHANGE_PAGE, payload: {page}})
+  }
 
   return (
     <AppContext.Provider
@@ -341,7 +387,10 @@ const AppProvider = ({children}) => {
         getJobs,
         setEditJob,
         deleteJob,
-        editJob
+        editJob,
+        showStats,
+        clearFilters,
+        changePage
       }}
     >
       {children}
